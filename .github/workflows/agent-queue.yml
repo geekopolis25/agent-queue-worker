@@ -1,0 +1,32 @@
+name: Agent Queue worker
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      live:
+        description: "Run live (true) or dry-run (false)"
+        default: "false"
+
+concurrency:
+  group: agent-queue
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run worker
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TODOIST_API_TOKEN: ${{ secrets.TODOIST_API_TOKEN }}
+          LIVE: ${{ github.event.inputs.live || vars.LIVE }}
+        run: |
+          if [ "$LIVE" = "true" ]; then python worker.py; else python worker.py --dry-run; fi
