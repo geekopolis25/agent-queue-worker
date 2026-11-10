@@ -93,7 +93,12 @@ def process(todo, client, task):
     todo.move(tid, SEC_PROGRESS)
     try:
         system, steps, template = parse_brief(task.get("description", ""))
-        full_system = system + "\n\nDISPATCH BRIEF (your only source of truth):\n" + task["description"]
+        brief = task["description"].replace("this card's Todoist ID", tid)
+        full_system = (
+            system
+            + f"\n\nYour Task ID is {tid}. You cannot save files in this run. The full report you write in chat is the deliverable, so do not list a missing file as a gap and do not mark the run PARTIAL for that reason. Do not wrap the Return Block in code fences."
+            + "\n\nDISPATCH BRIEF (your only source of truth):\n" + brief
+        )
         replies, err = run_steps(client, full_system, steps)
     except Exception as e:
         todo.add_label(task, "needs-rod")
@@ -103,7 +108,7 @@ def process(todo, client, task):
     final = replies[-1][1]
     i = final.find("RETURN BLOCK")
     block = final[i:] if i >= 0 else f"RETURN BLOCK\nStatus: PARTIAL\nGaps: final step gave no Return Block"
-    block = block.replace("Task ID:", f"Task ID: {tid}", 1) if f"Task ID: {tid}" not in block else block
+    block = block.replace("```", "").strip()
     if err:
         block += f"\nWorker stop reason: {err}"
         todo.add_label(task, "needs-rod")
