@@ -113,7 +113,7 @@ def process(todo, client, task):
         block += f"\nWorker stop reason: {err}"
         todo.add_label(task, "needs-rod")
     todo.comment(tid, block)
-    report = "\n\n".join(f"### {n}\n{t}" for n, t in replies[1:-1])
+    report = "\n\n".join(f"### {n}\n{t}" for n, t in replies[:-1])
     if report:
         todo.comment(tid, "FULL REPORT (worker output)\n\n" + report)
     todo.move(tid, SEC_REVIEW)
